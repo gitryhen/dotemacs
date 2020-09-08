@@ -34,20 +34,20 @@
 (setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")))
 (add-to-list 'package-archives
 '("melpa" . "http://melpa.org/packages/") t)
-;; ;;
-;; ;; slime
-;; ;;
-;; (setq inferior-lisp-program "/usr/bin/clisp") ; your Lisp system
-;; (add-to-list 'load-path "~/.emacs.d/slime/")  ; your SLIME directory
-;; (require 'slime)
-;; (slime-setup '(slime-fancy))
-;; (require 'ac-slime)
-;; (add-hook 'slime-mode-hook 'set-up-slime-ac)
-;; (add-hook 'slime-repl-mode-hook 'set-up-slime-ac)
-;; (eval-after-load "auto-complete"
-;;   '(add-to-list 'ac-modes 'slime-repl-mode))
-;; (add-hook 'lisp 'paredit-mode)
-;; (add-hook 'slime #'rainbow-delimiters-mode)
+;;
+;; slime
+;;
+(setq inferior-lisp-program "/usr/bin/clisp") ; your Lisp system
+(add-to-list 'load-path "~/.emacs.d/slime/")  ; your SLIME directory
+(require 'slime)
+(slime-setup '(slime-fancy))
+(require 'ac-slime)
+(add-hook 'slime-mode-hook 'set-up-slime-ac)
+(add-hook 'slime-repl-mode-hook 'set-up-slime-ac)
+(eval-after-load "auto-complete"
+  '(add-to-list 'ac-modes 'slime-repl-mode))
+(add-hook 'lisp 'paredit-mode)
+(add-hook 'slime #'rainbow-delimiters-mode)
 ;; kill buffer with live buffer attached to it
 (setq kill-buffer-query-functions
   (remq 'process-kill-buffer-query-function
@@ -177,16 +177,26 @@
 (global-set-key "\C-cc" 'org-capture)
 (setq org-agenda-files '("~/Documents/gtd/inbox.org"
                          "~/Documents/gtd/gtd.org"
-                         "~/Documents/gtd/tickler.org"))
+                         "~/Documents/gtd/tickler.org"
+			 "~/Documents/gtd/nextactions.org"))
 (setq org-capture-templates '(("t" "Todo [inbox]" entry
                                (file+headline "~/Documents/gtd/inbox.org" "Tasks")
                                "* TODO %i%?")
                               ("T" "Tickler" entry
                                (file+headline "~/Documents/gtd/tickler.org" "Tickler")
-                               "* %i%? \n %U")))
+                               "* %i%? \n %U")
+			      ("n" "next actions" checkitem
+                               (file "~/Documents/gtd/nextactions.org")
+                               "- [ ] %?\n")
+			      ("j" "journal" entry
+                               (file+datetree "~/Documents/gtd/journal.org")
+                               "* %?\nEntered on %U\n  %i\n  %a \n %K %k \n")))
 (setq org-refile-targets '(("~/Documents/gtd/gtd.org" :maxlevel . 3)
                            ("~/Documents/gtd/someday.org" :level . 1)
-			   ("~/Documents/gtd/tickler.org" :maxlevel . 2)))
+			   ("~/Documents/gtd/tickler.org" :maxlevel . 2)
+			   ("~/Documents/gtd/references.org" :level . 1)
+			   ("~/Documents/gtd/nextactions.org" :maxlevel . 3)))
+
 (fset 'yes-or-no-p 'y-or-n-p)
 	
 (setq confirm-nonexistent-file-or-buffer nil)
@@ -250,7 +260,7 @@
     ("830877f4aab227556548dc0a28bf395d0abe0e3a0ab95455731c9ea5ab5fe4e1" "aded61687237d1dff6325edb492bde536f40b048eab7246c61d5c6643c696b7f" "4cf9ed30ea575fb0ca3cff6ef34b1b87192965245776afa9e9e20c17d115f3fb" default)))
  '(package-selected-packages
    (quote
-    (org-evil auto-compile flycheck company-rtags rtags cmake-ide solarized-theme gruvbox-theme matlab-mode markdown-mode evil-paredit rainbow-delimiters company-auctex counsel-pydoc counsel ivy fzf gnuplot gnuplot-mode evil-magit magit evil-rsi evil-surround paredit-everywhere nlinum yasnippet-snippets paredit ido-vertical-mode flx elpy treemacs ac-slime)))
+    (cider org-evil auto-compile flycheck company-rtags rtags cmake-ide solarized-theme gruvbox-theme matlab-mode markdown-mode evil-paredit rainbow-delimiters company-auctex counsel-pydoc counsel ivy fzf gnuplot gnuplot-mode evil-magit magit evil-rsi evil-surround paredit-everywhere nlinum yasnippet-snippets paredit ido-vertical-mode flx elpy treemacs ac-slime)))
  '(pdf-view-midnight-colors (quote ("#fdf4c1" . "#1d2021")))
  '(recentf-auto-cleanup (quote never))
  '(show-paren-mode t)
