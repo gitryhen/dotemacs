@@ -1,525 +1,283 @@
+;; ;; 20230829
+;; ;; 20230913 first straight.el
+;; ;; 20231220 clean up of recentf
+
+(setq load-path (cons "~/.emacs.d/dotemacs/" load-path))
 (prefer-coding-system 'utf-8)
-(global-set-key (kbd "C-x s") 'save-buffer)
+(setq package-enable-at-startup nil)
+(defvar bootstrap-version)
+(let ((bootstrap-file
+       (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+      (bootstrap-version 6))
+  (unless (file-exists-p bootstrap-file)
+    (with-current-buffer
+        (url-retrieve-synchronously
+         "https://raw.githubusercontent.com/radian-software/straight.el/develop/install.el"
+         'silent 'inhibit-cookies)
+      (goto-char (point-max))
+      (eval-print-last-sexp)))
+  (load bootstrap-file nil 'nomessage))
+(straight-use-package 'use-package)
 (fset 'yes-or-no-p 'y-or-n-p)
-(setq inhibit-startup-message t
-      inhibit-startup-echo-area-message t)
-(setq package-archives '(("gnu" . "http://elpa.gnu.org/packages/")))
-(add-to-list 'package-archives
-	     '("melpa" . "http://melpa.org/packages/") t)
-(setq inhibit-startup-message t)   ;; no welcome
-(setq visible-bell nil)            ;; no beep
-(setq ring-bell-function 'ignore)
+(setq visible-bell nil)
+(setq bidi-paragraph-direction 'left-to-right)
+(if (display-graphic-p)
+    (setq initial-frame-alist
+	  '((background-color . "honeydew"))))
+(global-set-key "\M-z" 'zap-up-to-char)
+(setq backup-directory-alist '(("." . "~/Backup")))
+(with-eval-after-load 'tramp
+(add-to-list 'tramp-backup-directory-alist
+             (cons tramp-file-name-regexp nil)))
+(setq savehist-file "~/Backup/emacssavehistory")
+(savehist-mode 1)
+(setq history-length t)
+(setq history-delete-duplicates t)
+(setq savehist-save-minibuffer-history 1)
+(setq savehist-additional-variables
+      '(kill-ring
+        search-ring
+        regexp-search-ring))
 
-(global-font-lock-mode t)
-(setq font-lock-maximum-decoration 1)
-
-(require 'package)
-(package-initialize)
-(use-package mu4e
-  :init
-  (setq mu4e-maildir       "~/Mail/gmail")   ;; top-level Maildir
-  (setq mu4e-drafts-folder "/[Gmail]/Drafts")
-  (setq mu4e-sent-folder   "/[Gmail]/Verzonden berichten")
-  (setq mu4e-trash-folder  "/[Gmail]/Prullenbak"))
-;; (require 'mu4e)
-;; (setq mu4e-maildir       "~/Mail/gmail")   ;; top-level Maildir
-;; (setq mu4e-drafts-folder "/[Gmail]/Drafts")
-;; (setq mu4e-sent-folder   "/[Gmail]/Verzonden berichten")
-;; (setq mu4e-trash-folder  "/[Gmail]/Prullenbak")
-;; ;;(setq mu4e-drafts-folder "/Concepten")
-;; ;;(setq mu4e-sent-folder   "/Verzonden")
-
-;; company
-(use-package company
-  :bind (:map company-active-map
-	      ("C-n" . company-select-next)
-	      ("C-p". company-select-previous))
-  :config
-  (add-to-list 'company-backends 'company-c-headers 'company-plsense)
-  (add-hook 'perl-mode-hook 'company-mode)
-  (add-hook 'cperl-mode-hook 'company-mode)
-  (setq company-idle-delay 0.3)
-  (global-company-mode t))
-
-;; (require 'company)
-;; (define-key company-active-map (kbd "C-n") 'company-select-next)
-;; (define-key company-active-map (kbd "C-p") 'company-select-previous)
-;; (add-to-list 'company-backends 'company-c-headers 'company-plsense)
-;; (add-hook 'perl-mode-hook 'company-mode)
-;; (add-hook 'cperl-mode-hook 'company-mode)
-;;(require 'use-package)
-
-;; cperl-mode
-(defalias 'perl-mode 'cperl-mode)
-(mapc
- (lambda (pair)
-   (if (eq (cdr pair) 'perl-mode)
-       (setcdr pair 'cperl-mode)))
- (append auto-mode-alist interpreter-mode-alist))
-
-;;
-;; ivy (29-2-2020)
-;;
-;; (ivy-mode 1)
-;; (setq ivy-use-virtual-buffers t)
-;; (setq ivy-count-format "(%d/%d) ")
-;; (global-set-key (kbd "C-s") 'swiper-isearch)
-;; (global-set-key (kbd "M-x") 'counsel-M-x)
-;; (global-set-key (kbd "C-x C-f") 'counsel-find-file)
-;; (global-set-key (kbd "M-y") 'counsel-yank-pop)
-;; (global-set-key (kbd "<f1> f") 'counsel-describe-function)
-;; (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
-;; (global-set-key (kbd "<f1> l") 'counsel-find-library)
-;; (global-set-key (kbd "<f2> i") 'counsel-info-lookup-symbol)
-;; (global-set-key (kbd "<f2> u") 'counsel-unicode-char)
-;; (global-set-key (kbd "<f2> j") 'counsel-set-variable)
-;; (global-set-key (kbd "C-x b") 'ivy-switch-buffer)
-;; (global-set-key (kbd "C-c v") 'ivy-push-view)
-;; (global-set-key (kbd "C-c V") 'ivy-pop-view)
-
-;; ;; (global-set-key (kbd "C-c c") 'counsel-compile)
-;; ;; ;; (global-set-key (kbd "C-c g") 'counsel-git)
-;; ;; ;; (global-set-key (kbd "C-c j") 'counsel-git-grep)
-;; ;; ;; (global-set-key (kbd "C-c L") 'counsel-git-log)
-;; ;; (global-set-key (kbd "C-c k") 'counsel-rg)
-;; ;; ;; (global-set-key (kbd "C-c m") 'counsel-linux-app)
-;; (global-set-key (kbd "C-c n") 'counsel-fzf)
-;; (global-set-key (kbd "C-x l") 'counsel-locate)
-;; ;; (global-set-key (kbd "C-c J") 'counsel-file-jump)
-;; ;; ;; (global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
-;; ;; (global-set-key (kbd "C-c w") 'counsel-wmctrl)
-;; (global-set-key (kbd "C-x C-r") 'counsel-recentf)
-;; (global-set-key (kbd "C-x s") 'save-buffer)
-
-;; ido
-;; ido in helm is used as a setting in group:
-;; helm completing read handlers alist
-;; symbol find file. do not activate ido and helm
-;; (require 'ido)
-(ido-vertical-mode t)
-;; (setq ido-enable-flex-matching t)
-;; (setq ido-everywhere t) 
-;; (ido-mode 1)
-
-;; helm
-(require 'helm)
-(require 'helm-config)
-(global-set-key (kbd "M-x") 'helm-M-x)
-
-;; (helm-mode 1) ;; nodig voor tab regel hieronder
-;; ;;(define-key helm-map (kbd "<tab>") 'helm-execute-persistent-action)
-
-(global-set-key (kbd "M-i") 'helm-swoop)
-(global-set-key (kbd "C-x b") 'helm-buffers-list)
-(global-set-key (kbd "C-x r b") 'helm-bookmarks)
-(global-set-key (kbd "C-x m") 'helm-M-x)
-;; (global-set-key (kbd "C-x C-f") 'helm-find-files)
-(global-set-key (kbd "C-x C-r") 'helm-recentf)
-(helm-mode 1)
-(helm-flx-mode 1)
-
-;; ;;
-;; (require 'setup-helm-gtags)
-
-;;     ;; Enable helm-gtags-mode
-;;     (add-hook 'c-mode-hook 'helm-gtags-mode)
-
-;;     ;; Set key bindings
-;;     (eval-after-load "helm-gtags"
-;;       '(progn
-;;          (define-key helm-gtags-mode-map (kbd "M-t") 'helm-gtags-find-tag)
-;;          (define-key helm-gtags-mode-map (kbd "M-r") 'helm-gtags-find-rtag)
-;;          (define-key helm-gtags-mode-map (kbd "M-s") 'helm-gtags-find-symbol)
-;;          (define-key helm-gtags-mode-map (kbd "M-g M-p") 'helm-gtags-parse-file)
-;;          (define-key helm-gtags-mode-map (kbd "C-c <") 'helm-gtags-previous-history)
-;;          (define-key helm-gtags-mode-map (kbd "C-c >") 'helm-gtags-next-history)
-;;          (define-key helm-gtags-mode-map (kbd "M-,") 'helm-gtags-pop-stack)))
-
-;; ;; (add-hook 'after-init-hook #'global-flycheck-mode)
-;; ;; ;; (setq python-shell-interpreter "python"
-;; ;; ;;       python-shell-interpreter-args "-i")
-;; ;; ;; (setq python-shell-interpreter "jupyter"
-;; ;; ;;       python-shell-interpreter-args "console --simple-prompt"
-;; ;; ;;       python-shell-prompt-detect-failure-warning nil)
-;; ;; ;; (add-to-list 'python-shell-completion-native-disabled-interpreters
-;; ;; ;;              "jupyter")
-;; ;;
-
-;; slime
-(use-package slime
-  :init
-  (setq inferior-lisp-program "/usr/bin/clisp") ; your Lisp system
-  (add-to-list 'load-path "~/.emacs.d/slime/")  ; your SLIME directory
-  :config
-  (setq inferior-lisp-program "/usr/bin/clisp") ; your Lisp system
-  (add-to-list 'load-path "~/.emacs.d/slime/")  ; your SLIME directory
-  (slime-setup '(slime-fancy))
-  (add-hook 'slime-mode-hook 'set-up-slime-ac)
-  (add-hook 'slime-repl-mode-hook 'set-up-slime-ac)
-  (eval-after-load "auto-complete"
-    '(add-to-list 'ac-modes 'slime-repl-mode))
-  (add-hook 'lisp 'paredit-mode)
-  (add-hook 'slime #'rainbow-delimiters-mode)
-  (use-package ac-slime))
-
-;; (require 'slime)
-;; (slime-setup '(slime-fancy))
-;; (require 'ac-slime)
-;; (add-hook 'slime-mode-hook 'set-up-slime-ac)
-;; (add-hook 'slime-repl-mode-hook 'set-up-slime-ac)
-;; (eval-after-load "auto-complete"
-;;  '(add-to-list 'ac-modes 'slime-repl-mode))
-;; (add-hook 'lisp 'paredit-mode)
-;; (add-hook 'slime #'rainbow-delimiters-mode)
-
-;; ;; kill buffer with live buffer attached to it
-;; (setq kill-buffer-query-functions
-;;   (remq 'process-kill-buffer-query-function
-;;          kill-buffer-query-functions))
-
-;; open recent files faster (from mastering emacs 
-;; get rid of `find-file-read-only' and replace it with something
-;; more useful.
-;; (global-set-key (kbd "C-x C-r") 'recentf-open-files)
- 
-(use-package recentf
-  :config
-  (setq recentf-max-saved-items 50)
-  (recentf-mode t))
-;; enable recent files mode.
-;; (require 'recentf)
-;; (recentf-mode t)
-;; ;; 50 files ought to be enough.
-;; (setq recentf-max-saved-items 50)
-;; ;; (run-at-time nil (* 10 60) 'recentf-save-list)
-;; ;; (defun ido-recentf-open ()
-;; ;;   "Use `ido-completing-read' to \\[find-file] a recent file"
-;; ;;   (interactive)
-;; ;;   (if (find-file (ido-completing-read "Find recent file: " recentf-list))
-;; ;;       (message "Opening file...")
-;; ;;     (message "Aborting")))
-
-;; evil
-(require 'evil)
-;; (evil-mode t)
-(global-set-key (kbd "<f12>") 'evil-mode)
-(evil-set-initial-state 'ibuffer-mode 'normal)
-(evil-set-initial-state 'bookmark-bmenu-mode 'normal)
-(evil-set-initial-state 'dired-mode 'emacs)
-(evil-set-initial-state 'sunrise-mode 'emacs)
-(evil-set-initial-state 'org-mode 'emacs)
-(evil-set-initial-state 'elpy-mode 'emacs)
-(evil-set-initial-state 'Emacs-Lisp-mode 'emacs)
-(evil-set-initial-state 'text-mode 'normal)
-(require 'evil-surround)
-(global-evil-surround-mode 1)
-;; (evil-rsi-mode)
-;; (setq evil-move-cursor-back nil)	;sets the cursor after the last character, this is essential for editing/executing lisp code.
-;; ;; (require 'evil-org)
-;; ;; (add-hook 'org-mode-hook 'evil-org-mode)
-;; ;; (evil-org-set-key-theme '(navigation insert textobjects additional calendar))
-;; ;; (require 'evil-org-agenda)
-;; ;; (evil-org-agenda-set-keys)
-;; ;; show matching parens
-(show-paren-mode t)
-
-;; org mode
-(setq org-adapt-indentation nil)
-(global-set-key "\C-cl" 'org-store-link)
-(global-set-key "\C-ca" 'org-agenda)
-(global-set-key "\C-cb" 'org-iswitchb)
-(global-set-key "\C-cc" 'org-capture)
-(setq org-agenda-files '("~/Documents/gtd/inbox.org"
-                         "~/Documents/gtd/gtd.org"
-                         "~/Documents/gtd/tickler.org"
-			 "~/Documents/gtd/nextactions.org"))
-(setq org-capture-templates '(("t" "Todo [inbox]" entry
-                               (file+headline "~/Documents/gtd/inbox.org" "Tasks")
-                               "* TODO %i%?")
-                              ("T" "Tickler" entry
-                               (file+headline "~/Documents/gtd/tickler.org" "Tickler")
-                               "* %i%? \n %T")
-			      ("n" "next actions" checkitem
-                               (file "~/Documents/gtd/nextactions.org")
-                               "- [ ] %?\n")
-			      ("j" "journal" entry
-                               (file+datetree "~/Documents/gtd/journal.org")
-                               "* %?\nEntered on %U\n  %i\n  %a \n %K %k \n")
-			      ("a" "Appointment" entry
-			       (file  "~/Documents/gtd/gcal.org" )
-			       "* %?\n\n%^T\n\n:PROPERTIES:\n:calendar-id: henry.kelderman@gmail.com\n:END:\n\n")))
-(setq org-refile-targets '(("~/Documents/gtd/gtd.org" :maxlevel . 1)
-                           ("~/Documents/gtd/someday.org" :level . 1)
-			   ("~/Documents/gtd/tickler.org" :maxlevel . 2)
-			   ("~/Documents/gtd/references.org" :level . 1)
-			   ("~/Documents/gtd/nextactions.org" :maxlevel . 3)))
-;; (require 'org-superstar)
-;; (add-hook 'org-mode-hook (lambda () (org-superstar-mode 1)))
-(setq org-duration-format (quote h:mm))
-
-(fset 'yes-or-no-p 'y-or-n-p)
-	
+;; improve(d) backup
+(setq backup-directory-alist '(("." . "~/.config/emacs/backups")))
+(setq delete-old-version -1)
+(setq version-control t)
+(setq vc-make-backup-files t)
+(setq delete-old-versions t)
+(setq auto-save-file-name-transforms '((".*" "~/.config/emacs/auto-save-list/" t)))
+(setq system-trash-exclude-matches '("#[^/]+#$" ".*~$" "\\.emacs\\.desktop.*"))
+(setq system-trash-exclude-paths '("/tmp"))
+;; stop prompting
+;; source https://www.youtube.com/watch?v=ZFJlxBPvzE0 wretchedness of confirmation in emacs
+(setq dired-confirm-shell-command nil)
+(setq dired-no-confirm t)
+(setq dired-recursive-deletes (quote always))
+(setq dired-deletion-confirmer '(lambda (x) t))
+(setq confirm-kill-emacs nil)
+(setq confirm-kill-processes nil)
 (setq confirm-nonexistent-file-or-buffer nil)
+(set-buffer-modified-p nil)
+(add-hook 'kill-buffer-query-functions (lambda () (not-modified) t))
+(electric-pair-mode)
+(setq large-file-warning-threshold nil)
+;; stop showing warnings
+(setq warning-minimum-level :emergency)
+(autoload 'save-and-make "saver")
+(global-set-key (kbd "<f6>") 'save-and-make)
+(autoload 'xah-select-line "xah")
+
+(keymap-global-set "M-2" #'xah-select-line)
+(keymap-global-set "M-3" #'xah-select-text-in-quote)
+
+;; (use-package ess
+;;   :straight t
+;;   :init
+;;   (require 'ess-site)
+;;   (setq org-babel-R-command "/usr/bin/R --no-save"))
 
 
-;; ;; elpy
-;; (setq indent-tabs-mode nil)
-;; (elpy-enable)
-
-
-;; Enable Flycheck
-;; (when (require 'flycheck nil t)
-;;   (setq elpy-modules (delq 'elpy-module-flymake elpy-modules))
-;;   (add-hook 'elpy-mode-hook 'flycheck-mode))
-;; (setq elpy-rpc-python-commmand "python3")
-;; ;;
-;; ;; org agenda / google calendar
-;; ;;
-;; (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
-;; (setq package-check-signature nil)
-
-;; (require 'org-gcal)
-;; (use-package org-gcal
-;; :ensure t
-;; :config
-;; (setq org-gcal-client-id "281225453865-fueirjvo55kdvlaapich8noblfr88tg4.apps.googleusercontent.com"
-;; org-gcal-client-secret "L-SWgRtnKEAmfwx3oZe-WaOr"
-;; org-gcal-file-alist '(("henry.kelderman@gmail.com" .  "~/Documents/gtd/gcal.org"))))
-;; ;;
-;; ;; org agenda capture google calendar
-;; ;;
-;; (add-hook 'org-agenda-mode-hook (lambda () (org-gcal-sync) ))
-;; (add-hook 'org-capture-after-finalize-hook (lambda () (org-gcal-sync) ))
-
-;; ;; ;; kill buffer with live buffer attached to it
-;; ;; (setq kill-buffer-query-functions
-;; ;;   (remq 'process-kill-buffer-query-function
-;; ;;          kill-buffer-query-functions))
-;; ;; 
-;; ;; ;; (setq inferior-lisp-program "sbcl")	; your Lisp system
-;; ;; ;; (require 'slime)
-;; ;; ;; (slime-setup '(slime-fancy))
-;; ;; ;; (require 'ac-slime)
-;; ;; ;; (add-hook 'slime-mode-hook 'set-up-slime-ac)
-;; ;; ;; (add-hook 'slime-repl-mode-hook 'set-up-slime-ac)
-;; ;; ;;
-;; ;; ;; discover
-;; ;; ;;
-;; ;; (require 'discover)
-;; ;; (global-discover-mode 1)
-;; ;; (require 'company-auctex)
-;; ;; (company-auctex-init)
-;; ess
-(require 'ess-site)
-
-;; ; ;; (require 'rtags)
-;; ;; ;; (cmake-ide-setup)
-(org-babel-do-load-languages
- 'org-babel-load-languages
- '((python . t)))
-;; ;; (copy-face font-lock-constant-face 'calendar-iso-week-face)
-;; ;; (set-face-attribute 'calendar-iso-week-face nil
-;; ;;                     :height 0.7)
-;; ;; (setq calendar-intermonth-text
-;; ;;       '(propertize
-;; ;;         (format "%2d"
-;; ;;                 (car
-;; ;;                  (calendar-iso-from-absolute
-;; ;;                   (calendar-absolute-from-gregorian (list month day year)))))
-;; ;;         'font-lock-face 'calendar-iso-week-face))
-
-;; (custom-set-variables
-;;  ;; custom-set-variables was added by Custom.
-;;  ;; If you edit it by hand, you could mess it up, so be careful.
-;;  ;; Your init file should contain only one such instance.
-;;  ;; If there is more than one, they won't work right.
-;;  '(ansi-color-faces-vector
-;;    [default default default italic underline success warning error])
-;;  '(ansi-color-names-vector
-;;    ["#3c3836" "#fb4933" "#b8bb26" "#fabd2f" "#83a598" "#d3869b" "#8ec07c" "#ebdbb2"])
-;;  '(compilation-message-face (quote default))
-;;  '(cua-global-mark-cursor-color "#93E0E3")
-;;  '(cua-normal-cursor-color "#DCDCCC")
-;;  '(cua-overwrite-cursor-color "#F0DFAF")
-;;  '(cua-read-only-cursor-color "#7F9F7F")
-;;  '(custom-enabled-themes (quote (gruvbox-dark-medium)))
-;;  '(custom-safe-themes
-;;    (quote
-;;     ("7661b762556018a44a29477b84757994d8386d6edee909409fabe0631952dad9" "123a8dabd1a0eff6e0c48a03dc6fb2c5e03ebc7062ba531543dfbce587e86f2a" "0fffa9669425ff140ff2ae8568c7719705ef33b7a927a0ba7c5e2ffcfac09b75" "4cf9ed30ea575fb0ca3cff6ef34b1b87192965245776afa9e9e20c17d115f3fb" "51ec7bfa54adf5fff5d466248ea6431097f5a18224788d0bd7eb1257a4f7b773" "b89ae2d35d2e18e4286c8be8aaecb41022c1a306070f64a66fd114310ade88aa" "a06658a45f043cd95549d6845454ad1c1d6e24a99271676ae56157619952394a" "e1d09f1b2afc2fed6feb1d672be5ec6ae61f84e058cb757689edb669be926896" "830877f4aab227556548dc0a28bf395d0abe0e3a0ab95455731c9ea5ab5fe4e1" "2809bcb77ad21312897b541134981282dc455ccd7c14d74cc333b6e549b824f3" "285d1bf306091644fb49993341e0ad8bafe57130d9981b680c1dbd974475c5c7" "9685cefcb4efd32520b899a34925c476e7920725c8d1f660e7336f37d6d95764" "aded61687237d1dff6325edb492bde536f40b048eab7246c61d5c6643c696b7f" default)))
-;;  '(ein:output-area-inlined-images t)
-;;  '(fci-rule-color "#4F4F4F")
-;;  '(highlight-changes-colors (quote ("#DC8CC3" "#bbb0cb")))
-;;  '(highlight-symbol-colors
-;;    (quote
-;;     ("#67a86387593f" "#548763ed646c" "#6037530c52d0" "#5bcd59505f42" "#4e90559c4e56" "#64795920520c" "#52ae607160f6")))
-;;  '(highlight-symbol-foreground-color "#FFFFEF")
-;;  '(highlight-tail-colors
-;;    (quote
-;;     (("#4F4F4F" . 0)
-;;      ("#488249" . 20)
-;;      ("#5dacaf" . 30)
-;;      ("#57a2a4" . 50)
-;;      ("#b6a576" . 60)
-;;      ("#ac7b5a" . 70)
-;;      ("#aa5790" . 85)
-;;      ("#4F4F4F" . 100))))
-;;  '(hl-bg-colors
-;;    (quote
-;;     ("#b6a576" "#ac7b5a" "#9f5c5c" "#aa5790" "#85749c" "#57a2a4" "#5dacaf" "#488249")))
-;;  '(hl-fg-colors
-;;    (quote
-;;     ("#3F3F3F" "#3F3F3F" "#3F3F3F" "#3F3F3F" "#3F3F3F" "#3F3F3F" "#3F3F3F" "#3F3F3F")))
-;;  '(hl-paren-colors (quote ("#93E0E3" "#F0DFAF" "#8CD0D3" "#bbb0cb" "#7F9F7F")))
-;;  '(lsp-ui-doc-border "#FFFFEF")
-;;  '(nrepl-message-colors
-;;    (quote
-;;     ("#CC9393" "#DFAF8F" "#F0DFAF" "#488249" "#95d291" "#57a2a4" "#93E0E3" "#DC8CC3" "#bbb0cb")))
-;;  '(org-agenda-files
-;;    (quote
-;;     ("~/Documents/gtd/inbox.org" "~/Documents/gtd/gtd.org" "~/Documents/gtd/tickler.org" "~/Documents/gtd/gcal.org")))
-;;  '(org-babel-load-languages
-;;    (quote
-;;     ((emacs-lisp)
-;;      (python . t)
-;;      (R . t)
-;;      (awk . t)
-;;      (shell . t))))
-;;  '(org-beautify-theme-use-box-hack nil)
-;;  '(package-selected-packages
-;;    (quote
-;;     (elpy company-rtags epl flycheck flycheck-rtags highlight-indent-guides notmuch rtags smartparens markdown-mode chess slime slime-company lorem-ipsum csv-mode ein ess ess-R-data-view org-gcal org-superstar gruvbox-theme evil-surround matlab-mode evil evil-paredit evil-rsi ido-vertical-mode magit paredit solarized-theme)))
-;;  '(pdf-view-midnight-colors (quote ("#fdf4c1" . "#282828")))
-;;  '(pos-tip-background-color "#4F4F4F")
-;;  '(pos-tip-foreground-color "#FFFFEF")
-;;  '(show-paren-mode t)
-;;  '(smartrep-mode-line-active-bg (solarized-color-blend "#7F9F7F" "#4F4F4F" 0.2))
-;;  '(term-default-bg-color "#3F3F3F")
-;;  '(term-default-fg-color "#DCDCCC")
-;;  '(vc-annotate-background nil)
-;;  '(vc-annotate-background-mode nil)
-;;  '(vc-annotate-color-map
-;;    (quote
-;;     ((20 . "#CC9393")
-;;      (40 . "#de73b8c3a10d")
-;;      (60 . "#e755cbcea809")
-;;      (80 . "#F0DFAF")
-;;      (100 . "#ca11c96d9eb2")
-;;      (120 . "#b743beba96a7")
-;;      (140 . "#a487b4178eb0")
-;;      (160 . "#91cea98486ce")
-;;      (180 . "#7F9F7F")
-;;      (200 . "#8753b4279f64")
-;;      (220 . "#8ae3beeeaff2")
-;;      (240 . "#8e08c9d5c0bc")
-;;      (260 . "#90bed4dbd1c1")
-;;      (280 . "#93E0E3")
-;;      (300 . "#9034d992dc92")
-;;      (320 . "#8eced65fd95f")
-;;      (340 . "#8d67d32ed62e")
-;;      (360 . "#8CD0D3"))))
-;;  '(vc-annotate-very-old-color nil)
-;;  '(weechat-color-list
-;;    (quote
-;;     (unspecified "#3F3F3F" "#4F4F4F" "#9f5c5c" "#CC9393" "#488249" "#7F9F7F" "#b6a576" "#F0DFAF" "#57a2a4" "#8CD0D3" "#aa5790" "#DC8CC3" "#5dacaf" "#93E0E3" "#DCDCCC" "#6F6F6F")))
-;;  '(xterm-color-names
-;;    ["#4F4F4F" "#CC9393" "#7F9F7F" "#F0DFAF" "#8CD0D3" "#DC8CC3" "#93E0E3" "#fffff6"])
-;;  '(xterm-color-names-bright
-;;    ["#3F3F3F" "#DFAF8F" "#878777" "#6F6F6F" "#DCDCCC" "#bbb0cb" "#FFFFEF" "#FFFFFD"]))
-;; (custom-set-faces
-;;  ;; custom-set-faces was added by Custom.
-;;  ;; If you edit it by hand, you could mess it up, so be careful.
-;;  ;; Your init file should contain only one such instance.
-;;  ;; If there is more than one, they won't work right.
-;;  '(default ((t (:family "DejaVu Sans Mono" :foundry "PfEd" :slant normal :weight normal :height 113 :width normal)))))
-
-;; (find-file "~/Documents/gtd/gtd.org")
-
-
-;; dashboard
-(require 'dashboard)
-(dashboard-setup-startup-hook)
-
-;; which-key
-(require 'which-key)
-(which-key-mode)
-
-;; org-roam
-(setq org-roam-directory "~/Documents/orgroam2")
-(add-hook 'after-init-hook 'org-roam-mode)
-(global-set-key (kbd "<f5>") 'org-roam-node-find)
-(global-set-key (kbd "<f6>") 'org-roam-node-insert)
-(setq org-roam-v2-ack t)
-
-;; compile c 21-1-2022
-(add-hook 'c-mode-common-hook 
-          (lambda () (define-key c-mode-base-map (kbd "<f8>") 'compile)))
-(add-hook 'c-mode-common-hook
-	  (lambda () (define-key c-mode-base-map (kbd "<f9>") 'recompile)))
-;; (global-set-key (kbd "<f8>") 'compile)
-
-;; reftex
-(require 'reftex)
-(add-hook 'LaTeX-mode-hook 'turn-on-reftex)
-(add-hook 'latex-mode-hook 'turn-on-reftex)
-
-;; Spell-check
 (require 'flyspell)
 (setq flyspell-issue-message-flag nil
-      ispell-local-dictionary "en_US"
+      ispell-local-dictionary "en_US,nl"
       ispell-program-name "aspell"
       ispell-extra-args '("--sug-mode=ultra"))
-
 (add-hook 'text-mode-hook 'flyspell-mode)
 (add-hook 'prog-mode-hook 'flyspell-prog-mode)
 (define-key flyspell-mode-map (kbd "C-;") 'helm-flyspell-correct)
+
+(use-package pyvenv
+  :straight t
+  :init
+  (pyvenv-activate "/home/henry/venv"))
+
+;; (use-package company
+;;   :straight t
+;;   :bind (:map company-active-map
+;; 	      ("C-n" . company-select-next)
+;; 	      ("C-p" . company-select-previous))
+;;   :config
+;;   (add-to-list 'company-backends 'company-c-headers 'company-plsense)
+;;   (add-hook 'perl-mode-hook 'company-mode)
+;;   (add-hook 'cperl-mode-hook 'company-mode)
+;;   (add-hook 'python-mode 'company-mode)
+;;   (setq company-idle-delay 0.3))
+
+(use-package org-roam
+  :straight t
+  :custom
+  (org-roam-directory "~/OneDrive/Documents/orgroam")
+  :config
+  (org-roam-db-autosync-mode)
+  (org-roam-setup))
+
+(use-package org-ref
+  :straight t)
+
+(use-package notmuch
+  :straight t)
+
+(use-package magit
+  :straight t)
+
+;; (use-package smex
+;;   :straight t
+;;   :bind
+;;   (("M-x" . smex)
+;;   ("C-c C-c M-x" . execute-extended-command)))
+
+(use-package ido-vertical-mode
+  :straight t
+  :config
+  (ido-mode 1)
+  (ido-vertical-mode 1)
+  (ido-everywhere t)
+  (setq ido-vertical-define-keys 'C-n-and-C-p-only))
+
+(autoload 'ido-choose-from-recentf "myrecent")
+
+(use-package recentf
+  :straight t
+  :config
+  (setq recentf-max-saved-items 24
+	recent-max-menu-items 5)
+  (recentf-mode t)
+  :bind
+  ("C-x C-r" . ido-choose-from-recentf)
+  :hook (after-init . recentf-mode))
+
+(use-package init-open-recentf
+      :after recentf
+      :config (init-open-recentf))
+
+;; ;; (use-package recentf
+;; ;;   :straight t
+;; ;;   :config
+;; ;;   (setq recentf-max-saved-items 20)
+;; ;;   (recentf-mode t)
+;; ;;   :bind
+;; ;;   ("C-x C-r" . ido-choose-from-recentf))
+
+;;; (global-set-key (kbd "C-x C-r") 'ido-choose-from-recentf)
+
+;; here was org
+(require 'orgstuff)
+;; ;; The following from Rainer Konig results in an error when saving
+;; ;; as it asks to add missing non-existent-agenda file.
+;; ;; so i add ids by hand and nog by saving
+;; (add-hook 'org-mode-hook
+;;           (lambda ()
+;;             (add-hook 'before-save-hook 'my/org-add-ids-to-headlines-in-file nil 'local)))
+(global-set-key (kbd "<f7>") 'my/copy-id-to-clipboard)
+(global-set-key (kbd "<f8>") 'my/copy-idlink-to-clipboard)
+(global-set-key (kbd "<f9>") 'my/org-add-ids-to-headlines-in-file)
+(setq org-adapt-indentation nil)
+(setq org-duration-format (quote h:mm))
+(setq org-id-link-to-org-use-id t)
+(global-set-key (kbd "C-c l") 'org-store-link)
+(global-set-key (kbd "C-c a") 'org-agenda)
+(global-set-key (kbd "C-c b") 'org-iswitchb)
+(global-set-key (kbd "C-c c") 'org-capture)
+
+(use-package ag
+  :straight t)
+
+;; ;; (use-package slime
+;; ;;   :straight t
+;; ;;   :init
+;; ;;   (slime-setup '(slime-fancy))
+;; ;;   :config
+;; ;;   (setq inferior-lisp-program "/usr/bin/clisp"))
+
+;; (use-package tex
+;;   :straight auctex
+;;   :defer t)
+
+;; (use-package which-key
+;;   :straight t
+;;   :config
+;;   (which-key-mode t))
+
+(use-package doom-modeline
+  :straight t
+  :hook (after-init . doom-modeline-mode))
+
+(use-package corfu
+  :straight t
+  :custom
+  (corfu-cycle t)                ;; Enable cycling for `corfu-next/previous'
+  (corfu-auto t)                 ;; Enable auto completion
+  (corfu-separator ?\s)          ;; Orderless field separator
+  (corfu-quit-at-boundary nil)   ;; Never quit at completion boundary
+  (corfu-quit-no-match t)      ;; Never quit, even if there is no match
+  (corfu-preview-current nil)    ;; Disable current candidate preview
+  (corfu-preselect 'prompt)      ;; Preselect the prompt
+  (corfu-on-exact-match nil)     ;; Configure handling of exact matches
+  (corfu-scroll-margin 5)        ;; Use scroll margin
+
+  ;; ;; Enable Corfu only for certain modes.
+  ;; :hook ((prog-mode . corfu-mode)
+  ;;        (shell-mode . corfu-mode)
+  ;;        (eshell-mode . corfu-mode))
+
+  ;; Recommended: Enable Corfu globally.  This is recommended since Dabbrev can
+  ;; be used globally (M-/).  See also the customization variable
+  ;; `global-corfu-modes' to exclude certain modes.
+  :init
+  (setf corfu-auto t)
+  (global-corfu-mode)
+  (corfu-history-mode))
+
+;; Use Dabbrev with Corfu!
+(use-package dabbrev
+  ;; Swap M-/ and C-M-/
+  :bind (("M-/" . dabbrev-completion)
+         ("C-M-/" . dabbrev-expand))
+  ;; Other useful Dabbrev configurations.
+  :custom
+  (dabbrev-ignored-buffer-regexps '("\\.\\(?:pdf\\|jpe?g\\|png\\)\\'")))
+
+;; ;; A few more useful configurations...
+;; (use-package emacs
+;;   :init
+;;   ;; TAB cycle if there are only few candidates
+;;   (setq completion-cycle-threshold 3)
+
+;;   ;; Emacs 28: Hide commands in M-x which do not apply to the current mode.
+;;   ;; Corfu commands are hidden, since they are not supposed to be used via M-x.
+;;   ;; (setq read-extended-command-predicate
+;;   ;;       #'command-completion-default-include-p)
+
+;;   ;; Enable indentation+completion using the TAB key.
+;;   ;; `completion-at-point' is often bound to M-TAB.
+;;   (setq tab-always-indent 'complete))
 
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(ansi-color-faces-vector
-   [default default default italic underline success warning error])
- '(ansi-color-names-vector
-   ["black" "red3" "ForestGreen" "yellow3" "blue" "magenta3" "DeepSkyBlue" "gray50"])
- '(custom-enabled-themes nil)
- '(custom-safe-themes
-   '("f0eb51d80f73b247eb03ab216f94e9f86177863fb7e48b44aacaddbfe3357cf1" "b06b2483f9fb7bfceb371c8341c0f20e3a38fecd7af7ac1c67bfa028aed9f45c" default))
- '(elpy-rpc-python-command "python3")
- '(helm-completing-read-handlers-alist
-   '((find-tag . helm-completing-read-default-find-tag)
-     (xref-find-definitions . helm-completing-read-default-find-tag)
-     (xref-find-references . helm-completing-read-default-find-tag)
-     (ggtags-find-tag-dwim . helm-completing-read-default-find-tag)
-     (tmm-menubar)
-     (find-file . ido)
-     (execute-extended-command)
-     (dired-do-rename . helm-read-file-name-handler-1)
-     (dired-do-copy . helm-read-file-name-handler-1)
-     (dired-do-symlink . helm-read-file-name-handler-1)
-     (dired-do-relsymlink . helm-read-file-name-handler-1)
-     (dired-do-hardlink . helm-read-file-name-handler-1)
-     (basic-save-buffer . helm-read-file-name-handler-1)
-     (write-file . helm-read-file-name-handler-1)
-     (write-region . helm-read-file-name-handler-1)))
+ '(electric-pair-mode t)
+ '(ido-mode 'both nil (ido))
+ '(newsticker-url-list
+   '(("nos nieuws" "https://feeds.nos.nl/nosnieuwsalgemeen" nil nil nil)
+     ("zerohedge" "http://feeds.feedburner.com/zerohedge/feed" nil nil nil)))
  '(org-babel-load-languages
-   '((octave . t)
-     (python . t)
-     (shell . t)
-     (awk . t)
+   '((python . t)
      (perl . t)
-     (octave . t)))
+     (emacs-lisp . t)
+     (R . t)
+     (awk . t)
+     (gnuplot . t)
+     (latex . t)
+     (dot . t)))
  '(org-confirm-babel-evaluate nil)
- '(org-export-backends '(ascii html icalendar latex md odt))
- '(package-selected-packages
-   '(use-package gruvbox-theme nano-theme jupyter helm-flyspell helm-ag helm-swoop helm-flx helm markdown-mode fzf ivy counsel which-key dashboard ranger w3m company-plsense graphviz-dot-mode sqlite3 org-roam pomodoro esup magit auctex flycheck smartparens paredit ac-slime ess evil evil-surround slime slime-company company))
- '(show-paren-mode t)
- '(tool-bar-mode nil)
- '(widget-image-enable nil)
- '(x-underline-at-descent-line t))
+ '(org-id-locations-file "~/OneDrive/Documents/.org-id-locations")
+ '(package-selected-packages '(ido-vertical-mode)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(default ((t (:family "DejaVu Sans Mono" :foundry "PfEd" :slant normal :weight normal :height 113 :width normal)))))
+ '(default ((t (:family "Iosevka Fixed SS05" :foundry "UKWN" :slant normal :weight regular :height 113 :width normal)))))
+(put 'set-goal-column 'disabled nil)
